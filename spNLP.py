@@ -28,16 +28,16 @@ def main() -> None:
     for doc in list(docBin.get_docs(nlp.vocab)):
         # Find the most common words in the doc that aren't stop words and are alphabetical
         # Take the lemma of the word
-        words = [token.text for token in doc if token.is_stop is False and token.is_alpha and not token.is_punct]
+        words = [token.lemma_ for token in doc if token.is_stop is False and token.is_alpha and not token.is_punct]
         
         word_freq.update(words)
         
     # Use matcher to find sentences containing most common words
-    matcher = PhraseMatcher(nlp.vocab)
-    pattern = [nlp.make_doc(t[0]) for t in word_freq.most_common(25)]
+    matcher = PhraseMatcher(nlp.vocab, attr="LEMMA")
+    pattern = [nlp(t[0]) for t in word_freq.most_common(25)]
 
     matcher.add('MOST_FREQ', pattern)
-
+    
     # Construct dict with most frequent words and 
     # the sentences they appear in, 
     # the docs they appear in, 
@@ -48,15 +48,17 @@ def main() -> None:
         for match_id, start, end in matches:
             # Get matched span
             matched_span = d[start:end]
-            if matched_span.lemma_ in groups:
-                groups[matched_span.lemma_]["sents"].add(matched_span.sent)
-                groups[matched_span.lemma_]["docs"].add(d.user_data["name"])
+            w = matched_span.lemma_
+            
+            if w in groups:
+                groups[w]["sents"].add(matched_span.sent.text)
+                groups[w]["docs"].add(d.user_data["name"])
             else:
-                groups[matched_span.lemma_] = {
-                    "word": matched_span.lemma_,
-                    "sents": {matched_span.sent},
+                groups[w] = {
+                    "word": w,
+                    "sents": { matched_span.sent.text },
                     "docs": { d.user_data["name"] },
-                    "freq": word_freq[matched_span.text]
+                    "freq": word_freq[w]
                 }
 
     listWords = list(groups.values())
