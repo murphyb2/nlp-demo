@@ -5,18 +5,21 @@ from spacy.matcher import PhraseMatcher
 from spacy.tokens import DocBin
 import pandas as pd
 import os
+import pathlib
 
 def loadDocs(nlp) -> DocBin:
 
-    directory = './docs'
+    directory = os.path.join(pathlib.Path(__file__).parent.absolute(),'docs')
     docBin = DocBin()
+    
     for filename in os.listdir(directory):
         f = os.path.join(directory, filename)
+        
         if os.path.isfile(f) and filename.endswith('.txt'):
-            print(f"Reading {filename.split('.')[0]}")
             # Read doc
             with open(f, encoding="utf8") as d:
                 text = d.read()
+            
             newDoc = nlp(text)
             newDoc.user_data = {"name": filename.split('.')[0]}
 
@@ -59,29 +62,29 @@ def matchToDict(word_freq: Counter, docBin: DocBin, nlp)-> Dict:
                 }
     return groups
 
-def main() -> None:
+def nlp() -> None:
     
-    print(">>>>>>>>                                                                         <<<<<<<<")
-    print(">>>>>>>>                      SpaCy Word Frequency Demo                          <<<<<<<<")
-    print(">>>>>>>>                                                                         <<<<<<<<")
-    print()
-    print("> This application will analyze all text (.txt) files located in the ./docs folder")
-    print("> and output the 25 most frequent words in ALL of the documents.")
-    print()
+    # print(">>>>>>>>                                                                         <<<<<<<<")
+    # print(">>>>>>>>                      SpaCy Word Frequency Demo                          <<<<<<<<")
+    # print(">>>>>>>>                                                                         <<<<<<<<")
+    # print()
+    # print("> This application will analyze all text (.txt) files located in the ./docs folder")
+    # print("> and output the 25 most frequent words in ALL of the documents.")
+    # print()
 
-    result = input("Press any key to begin analysis or 'z' to quit...\n")
-    if result.lower() == 'z':
-        return
-    print()
+    # result = input("Press any key to begin analysis or 'z' to quit...\n")
+    # if result.lower() == 'z':
+    #     return
+    # print()
 
     # Load the spacy model and read the doc text
     nlp = spacy.load("en_core_web_sm")
     
     docBin = loadDocs(nlp)
 
-    print()
-    print("Analyzing...")
-    print()
+    # print()
+    # print("Analyzing...")
+    # print()
     
     # Count most frequent words
     word_freq = mostFrequentWords(docBin, nlp)
@@ -95,15 +98,17 @@ def main() -> None:
     # Sort and create the dataframe for output
     listWords = list(groups.values())
     sortedList = sorted(listWords, key=lambda x: x["freq"], reverse=True)
-    df = pd.DataFrame(sortedList)
-    df.sort_values(by=["freq"], inplace=True, ascending=False)
-    print(df)
 
-    print()
-    answer = input("Save to csv file? Press 'Y' or 'N':\n")
-    if answer.lower() == 'y':
-        print("Saving to out.csv...")
-        df.to_csv("out.csv")
+    df = pd.DataFrame(sortedList)
+    # df.sort_values(by=["freq"], inplace=True, ascending=False)
+    # print(df)
+    # print(df.to_json())
+    return df.to_dict(orient="records")
+    # print(df)
+
+    # print()
+    # answer = input("Save to csv file? Press 'Y' or 'N':\n")
+    # if answer.lower() == 'y':
+    #     print("Saving to out.csv...")
+    #     df.to_csv("out.csv")
     
-if __name__ == "__main__":
-    main()

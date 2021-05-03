@@ -1,0 +1,15 @@
+{% extends 'base.html' %} {% block content %}
+
+<h1>Most Frequent Words</h1>
+<table style="width: 100%">
+  {% for entry in data %}
+  <tr>
+    <td>{{ entry.word }}</td>
+    <td>{{ entry.freq }}</td>
+    <td>{{ entry.docs }}</td>
+    <td>{{ entry.sents }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+{% endblock %}
