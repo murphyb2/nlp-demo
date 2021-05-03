@@ -1,4 +1,4 @@
-# SpaCy
+# SpaCy NLP Demo
 
 ## Initialize Python Environment
 
@@ -6,7 +6,7 @@ Install the python packages as required in the Pipfile
 
 ```shell
 pipenv shell
-pipenv install spacy
+pipenv install
 ```
 
 ## Install SpaCy PreTrained Model
