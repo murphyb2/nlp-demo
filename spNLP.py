@@ -1,8 +1,7 @@
 import spacy
 from collections import Counter
-from spacy.matcher import Matcher
+from spacy.matcher import PhraseMatcher
 from spacy.tokens import DocBin
-from spacy.attrs import LEMMA, ORTH
 import pandas as pd
 
 def main() -> None:
@@ -20,22 +19,22 @@ def main() -> None:
 
         docBin.add(newDoc)
 
+    print()
     print("Analyzing...")
+    print()
+    
+    # Count most frequent words
     word_freq = Counter()
     for doc in list(docBin.get_docs(nlp.vocab)):
-        print(doc.user_data["name"])
         # Find the most common words in the doc that aren't stop words and are alphabetical
         # Take the lemma of the word
-        words = [token.lemma_ for token in doc if token.is_stop is False and token.is_alpha and not token.is_punct]
+        words = [token.text for token in doc if token.is_stop is False and token.is_alpha and not token.is_punct]
         
         word_freq.update(words)
-    
-    for t in word_freq.most_common(25):
-        print(f">> {t[0]}, {t[1]}")
         
-    # # Use matcher to find sentences containing most common words
-    matcher = Matcher(nlp.vocab)
-    pattern = [[{"ORTH": t[0],} ] for t in word_freq.most_common(25)]
+    # Use matcher to find sentences containing most common words
+    matcher = PhraseMatcher(nlp.vocab)
+    pattern = [nlp.make_doc(t[0]) for t in word_freq.most_common(25)]
 
     matcher.add('MOST_FREQ', pattern)
 
@@ -49,22 +48,24 @@ def main() -> None:
         for match_id, start, end in matches:
             # Get matched span
             matched_span = d[start:end]
-            if matched_span.text in groups:
-                groups[matched_span.text]["sents"].append(matched_span.sent)
-                groups[matched_span.text]["docs"].add(d.user_data["name"])
+            if matched_span.lemma_ in groups:
+                groups[matched_span.lemma_]["sents"].add(matched_span.sent)
+                groups[matched_span.lemma_]["docs"].add(d.user_data["name"])
             else:
-                groups[matched_span.text] = {
-                    "sents": [matched_span.sent],
+                groups[matched_span.lemma_] = {
+                    "word": matched_span.lemma_,
+                    "sents": {matched_span.sent},
                     "docs": { d.user_data["name"] },
                     "freq": word_freq[matched_span.text]
                 }
 
-    for word, data in groups.items():
-        print(word, data["freq"])
+    listWords = list(groups.values())
+    sortedList = sorted(listWords, key=lambda x: x["freq"], reverse=True)
         
-    
-    # df = pd.DataFrame(groups)
-    # print(df.head)
+    df = pd.DataFrame(sortedList)
+    df.sort_values(by=["freq"], inplace=True, ascending=False)
+    print(df)
+    df.to_csv("out.csv")
     
 if __name__ == "__main__":
     main()
