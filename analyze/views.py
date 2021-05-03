@@ -5,5 +5,4 @@ from .spNLP import nlp
 def index(request):
     data = nlp()
     context = {'data': data}
-    print(data)
     return render(request, 'index.html', context)

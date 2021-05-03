@@ -4,6 +4,7 @@ from collections import Counter
 from spacy.matcher import PhraseMatcher
 from spacy.tokens import DocBin
 import pandas as pd
+from collections import OrderedDict
 import os
 import pathlib
 
@@ -55,7 +56,7 @@ def matchToDict(word_freq: Counter, docBin: DocBin, nlp)-> Dict:
                 groups[w]["docs"].add(d.user_data["name"])
             else:
                 groups[w] = {
-                    "word": w,
+                    "word": matched_span.text,
                     "sents": { matched_span.sent.text },
                     "docs": { d.user_data["name"] },
                     "freq": word_freq[w]
@@ -63,29 +64,11 @@ def matchToDict(word_freq: Counter, docBin: DocBin, nlp)-> Dict:
     return groups
 
 def nlp() -> None:
-    
-    # print(">>>>>>>>                                                                         <<<<<<<<")
-    # print(">>>>>>>>                      SpaCy Word Frequency Demo                          <<<<<<<<")
-    # print(">>>>>>>>                                                                         <<<<<<<<")
-    # print()
-    # print("> This application will analyze all text (.txt) files located in the ./docs folder")
-    # print("> and output the 25 most frequent words in ALL of the documents.")
-    # print()
-
-    # result = input("Press any key to begin analysis or 'z' to quit...\n")
-    # if result.lower() == 'z':
-    #     return
-    # print()
-
     # Load the spacy model and read the doc text
     nlp = spacy.load("en_core_web_sm")
     
     docBin = loadDocs(nlp)
 
-    # print()
-    # print("Analyzing...")
-    # print()
-    
     # Count most frequent words
     word_freq = mostFrequentWords(docBin, nlp)
     
@@ -95,20 +78,8 @@ def nlp() -> None:
     # and the frequency of the word
     groups = matchToDict(word_freq, docBin, nlp)
     
-    # Sort and create the dataframe for output
-    listWords = list(groups.values())
-    sortedList = sorted(listWords, key=lambda x: x["freq"], reverse=True)
-
-    df = pd.DataFrame(sortedList)
-    # df.sort_values(by=["freq"], inplace=True, ascending=False)
-    # print(df)
-    # print(df.to_json())
-    return df.to_dict(orient="records")
-    # print(df)
-
-    # print()
-    # answer = input("Save to csv file? Press 'Y' or 'N':\n")
-    # if answer.lower() == 'y':
-    #     print("Saving to out.csv...")
-    #     df.to_csv("out.csv")
-    
+    # Sort the data for output
+    sortedDict = OrderedDict(sorted(groups.items(), key=lambda x: x[1]['freq'], reverse=True ))
+    for key, value in sortedDict.items():
+        sortedDict[key]["docs"] = sorted(value["docs"])
+    return sortedDict
