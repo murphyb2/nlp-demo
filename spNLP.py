@@ -33,8 +33,31 @@ def mostFrequentWords(docBin: DocBin, nlp) -> Counter():
         word_freq.update(words)
     return word_freq
 
-def matchToDict()-> Dict:
-    pass
+def matchToDict(word_freq: Counter, docBin: DocBin, nlp)-> Dict:
+    # Use matcher to find sentences containing most common words
+    matcher = PhraseMatcher(nlp.vocab, attr="LEMMA")
+    pattern = [nlp(t[0]) for t in word_freq.most_common(25)]
+    matcher.add('MOST_FREQ', pattern)
+
+    groups = {}
+    for d in list(docBin.get_docs(nlp.vocab)):
+        matches = matcher(d)
+        for match_id, start, end in matches:
+            # Get matched span
+            matched_span = d[start:end]
+            w = matched_span.lemma_
+            
+            if w in groups:
+                groups[w]["sents"].add(matched_span.sent.text)
+                groups[w]["docs"].add(d.user_data["name"])
+            else:
+                groups[w] = {
+                    "word": w,
+                    "sents": { matched_span.sent.text },
+                    "docs": { d.user_data["name"] },
+                    "freq": word_freq[w]
+                }
+    return groups
 
 def main() -> None:
     
@@ -42,7 +65,7 @@ def main() -> None:
     print(">>>>>>>>                      SpaCy Word Frequency Demo                          <<<<<<<<")
     print(">>>>>>>>                                                                         <<<<<<<<")
     print()
-    print("> This application will analyze all text (.txt) files located in the docs folder")
+    print("> This application will analyze all text (.txt) files located in the ./docs folder")
     print("> and output the 25 most frequent words in ALL of the documents.")
     print()
 
@@ -62,35 +85,14 @@ def main() -> None:
     
     # Count most frequent words
     word_freq = mostFrequentWords(docBin, nlp)
-        
-    # Use matcher to find sentences containing most common words
-    matcher = PhraseMatcher(nlp.vocab, attr="LEMMA")
-    pattern = [nlp(t[0]) for t in word_freq.most_common(25)]
-    matcher.add('MOST_FREQ', pattern)
     
     # Construct dict with most frequent words and 
     # the sentences they appear in, 
     # the docs they appear in, 
     # and the frequency of the word
-    groups = {}
-    for d in list(docBin.get_docs(nlp.vocab)):
-        matches = matcher(d)
-        for match_id, start, end in matches:
-            # Get matched span
-            matched_span = d[start:end]
-            w = matched_span.lemma_
-            
-            if w in groups:
-                groups[w]["sents"].add(matched_span.sent.text)
-                groups[w]["docs"].add(d.user_data["name"])
-            else:
-                groups[w] = {
-                    "word": w,
-                    "sents": { matched_span.sent.text },
-                    "docs": { d.user_data["name"] },
-                    "freq": word_freq[w]
-                }
-
+    groups = matchToDict(word_freq, docBin, nlp)
+    
+    # Sort and create the dataframe for output
     listWords = list(groups.values())
     sortedList = sorted(listWords, key=lambda x: x["freq"], reverse=True)
     df = pd.DataFrame(sortedList)
