@@ -98,13 +98,9 @@ def main() -> None:
     groups = matchToDict(word_freq, docBin, nlp)
     
     # Sort and create the dataframe for output
-    # listWords = list(groups.values())
-    # sortedList = sorted(listWords, key=lambda x: x["freq"], reverse=True)
     df = pd.DataFrame(groups.values())
     df.sort_values(by=["freq"], inplace=True, ascending=False)
     pd.set_option('display.max_rows', None)
-    # pd.set_option('display.max_colwidth', 100)
-    # print(tabulate(df.groupby(["word", "sents", "freq"]).first(), tablefmt="fancy_grid"))
     print(tabulate(df, headers=df.columns, tablefmt="fancy_grid"))
 
 
