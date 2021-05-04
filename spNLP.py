@@ -74,7 +74,7 @@ def main() -> None:
     print("> and output the 25 most frequent words in ALL of the documents.")
     print()
 
-    result = input("Press any key to begin analysis or 'z' to quit...\n")
+    result = input("Press enter to begin analysis or 'z' to quit...\n")
     if result.lower() == 'z':
         return
     print()
