@@ -41,7 +41,7 @@ def matchToDict(word_freq: Counter, docBin: DocBin, nlp)-> Dict:
     pattern = [nlp(t[0]) for t in word_freq.most_common(25)]
     matcher.add('MOST_FREQ', pattern)
 
-    wrapper = textwrap.TextWrapper(width=50)
+    wrapper = textwrap.TextWrapper(width=80)
     
     groups = {}
     for d in list(docBin.get_docs(nlp.vocab)):
@@ -52,21 +52,15 @@ def matchToDict(word_freq: Counter, docBin: DocBin, nlp)-> Dict:
             w = matched_span.lemma_
             
             if w in groups:
-                groups[w]["sents"] += '\n' + wrapper.fill(text=matched_span.sent.text)
+                groups[w]["sents"] += '\n> ' + wrapper.fill(text=matched_span.sent.text)
                 groups[w]["docs"].add(d.user_data["name"])
             else:
                 groups[w] = {
                     "word": w,
-                    "sents":  '\n' + wrapper.fill(text=matched_span.sent.text) ,
+                    "sents":  '> ' + wrapper.fill(text=matched_span.sent.text) ,
                     "docs": { d.user_data["name"] },
                     "freq": word_freq[w]
                 }
-            # groups.append({
-            #     "word": w,
-            #     "docs": d.user_data["name"],
-            #     "freq": word_freq[w],
-            #     "sents": wrapper.fill(text=matched_span.sent.text),
-            # })
 
     return groups
 
