@@ -1,10 +1,12 @@
 {% extends 'base.html' %} {% block content %}
 
-<h1>Most Frequent Words</h1>
+<h1 class="mx-auto">Most Frequent Words</h1>
 {% for key, value in data.items %}
-<h2>{{ key }}</h2>
-<h3>Frequency: {{ value.freq }}</h3>
-<h4>{% for doc in value.docs %} {{doc}} {% endfor %}</h4>
+<h2 class="font-weight-bold">{{ key }}</h2>
+<h3 class="font-italic">Frequency: {{ value.freq }}</h3>
+<h4 class="font-italic">
+  Appears in: {% for doc in value.docs %} {{doc}} {% endfor %}
+</h4>
 
 <ul>
   {% for sent in value.sents %}
