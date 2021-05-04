@@ -3,7 +3,6 @@ import spacy
 from collections import Counter
 from spacy.matcher import PhraseMatcher
 from spacy.tokens import DocBin
-import pandas as pd
 from collections import OrderedDict
 import os
 import pathlib
