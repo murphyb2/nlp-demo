@@ -1,10 +1,12 @@
+import os
 from typing import Dict
-import spacy
 from collections import Counter
+import spacy
 from spacy.matcher import PhraseMatcher
 from spacy.tokens import DocBin
 import pandas as pd
-import os
+from tabulate import tabulate
+import textwrap
 
 def loadDocs(nlp) -> DocBin:
 
@@ -39,7 +41,9 @@ def matchToDict(word_freq: Counter, docBin: DocBin, nlp)-> Dict:
     pattern = [nlp(t[0]) for t in word_freq.most_common(25)]
     matcher.add('MOST_FREQ', pattern)
 
-    groups = []
+    wrapper = textwrap.TextWrapper(width=50)
+    
+    groups = {}
     for d in list(docBin.get_docs(nlp.vocab)):
         matches = matcher(d)
         for match_id, start, end in matches:
@@ -47,22 +51,22 @@ def matchToDict(word_freq: Counter, docBin: DocBin, nlp)-> Dict:
             matched_span = d[start:end]
             w = matched_span.lemma_
             
-            # if w in groups:
-            #     groups[w]["sents"].add(matched_span.sent.text)
-            #     groups[w]["docs"].add(d.user_data["name"])
-            # else:
-            #     groups[w] = {
-            #         "word": w,
-            #         "sents": { matched_span.sent.text },
-            #         "docs": { d.user_data["name"] },
-            #         "freq": word_freq[w]
-            #     }
-            groups.append({
-                "word": w,
-                "docs": d.user_data["name"],
-                "freq": word_freq[w],
-                "sents": matched_span.sent.text,
-            })
+            if w in groups:
+                groups[w]["sents"] += '\n' + wrapper.fill(text=matched_span.sent.text)
+                groups[w]["docs"].add(d.user_data["name"])
+            else:
+                groups[w] = {
+                    "word": w,
+                    "sents":  '\n' + wrapper.fill(text=matched_span.sent.text) ,
+                    "docs": { d.user_data["name"] },
+                    "freq": word_freq[w]
+                }
+            # groups.append({
+            #     "word": w,
+            #     "docs": d.user_data["name"],
+            #     "freq": word_freq[w],
+            #     "sents": wrapper.fill(text=matched_span.sent.text),
+            # })
 
     return groups
 
@@ -101,12 +105,14 @@ def main() -> None:
     
     # Sort and create the dataframe for output
     # listWords = list(groups.values())
-    sortedList = sorted(groups, key=lambda x: x["freq"], reverse=True)
-    df = pd.DataFrame(sortedList)
+    # sortedList = sorted(listWords, key=lambda x: x["freq"], reverse=True)
+    df = pd.DataFrame(groups.values())
     df.sort_values(by=["freq"], inplace=True, ascending=False)
     pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_colwidth', 100)
-    print(df.groupby(["word", "sents", "freq"]).first())
+    # pd.set_option('display.max_colwidth', 100)
+    # print(tabulate(df.groupby(["word", "sents", "freq"]).first(), tablefmt="fancy_grid"))
+    print(tabulate(df, headers=df.columns, tablefmt="fancy_grid"))
+
 
     print()
     answer = input("Save to csv file? Press 'Y' or 'N':\n")
