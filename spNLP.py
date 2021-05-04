@@ -39,7 +39,7 @@ def matchToDict(word_freq: Counter, docBin: DocBin, nlp)-> Dict:
     pattern = [nlp(t[0]) for t in word_freq.most_common(25)]
     matcher.add('MOST_FREQ', pattern)
 
-    groups = {}
+    groups = []
     for d in list(docBin.get_docs(nlp.vocab)):
         matches = matcher(d)
         for match_id, start, end in matches:
@@ -47,16 +47,23 @@ def matchToDict(word_freq: Counter, docBin: DocBin, nlp)-> Dict:
             matched_span = d[start:end]
             w = matched_span.lemma_
             
-            if w in groups:
-                groups[w]["sents"].add(matched_span.sent.text)
-                groups[w]["docs"].add(d.user_data["name"])
-            else:
-                groups[w] = {
-                    "word": w,
-                    "sents": { matched_span.sent.text },
-                    "docs": { d.user_data["name"] },
-                    "freq": word_freq[w]
-                }
+            # if w in groups:
+            #     groups[w]["sents"].add(matched_span.sent.text)
+            #     groups[w]["docs"].add(d.user_data["name"])
+            # else:
+            #     groups[w] = {
+            #         "word": w,
+            #         "sents": { matched_span.sent.text },
+            #         "docs": { d.user_data["name"] },
+            #         "freq": word_freq[w]
+            #     }
+            groups.append({
+                "word": w,
+                "docs": d.user_data["name"],
+                "freq": word_freq[w],
+                "sents": matched_span.sent.text,
+            })
+
     return groups
 
 def main() -> None:
@@ -93,11 +100,13 @@ def main() -> None:
     groups = matchToDict(word_freq, docBin, nlp)
     
     # Sort and create the dataframe for output
-    listWords = list(groups.values())
-    sortedList = sorted(listWords, key=lambda x: x["freq"], reverse=True)
+    # listWords = list(groups.values())
+    sortedList = sorted(groups, key=lambda x: x["freq"], reverse=True)
     df = pd.DataFrame(sortedList)
     df.sort_values(by=["freq"], inplace=True, ascending=False)
-    print(df)
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.max_colwidth', 100)
+    print(df.groupby(["word", "sents", "freq"]).first())
 
     print()
     answer = input("Save to csv file? Press 'Y' or 'N':\n")
